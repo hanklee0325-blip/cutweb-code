@@ -1,28 +1,34 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from rembg import remove
-from PIL import Image
-import io
+from io import BytesIO
 
 app = FastAPI()
 
-# 首頁
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# 去背API
+@app.get("/")
+def home():
+    return HTMLResponse("""
+    <h1>AI 去背 SaaS</h1>
+    <form action="/remove-bg" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <button type="submit">去背</button>
+    </form>
+    """)
+
 @app.post("/remove-bg")
 async def remove_bg(file: UploadFile = File(...)):
-    input_bytes = await file.read()
+    input_data = await file.read()
+    output = remove(input_data)
 
-    output = remove(input_bytes)
-
-    return StreamingResponse(
-        io.BytesIO(output),
-        media_type="image/png",
-        headers={
-            "Content-Disposition": "attachment; filename=result.png"
-        }
+    return HTMLResponse(
+        content=f"<h3>完成</h3><a download='output.png' href='data:image/png;base64,{output}'>下載</a>"
     )
