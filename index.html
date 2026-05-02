@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>AI 去背工具</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+/* 卡片 */
+.container {
+    max-width: 500px;
+    margin: auto;
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* 上傳區 */
+.upload-box {
+    border: 2px dashed white;
+    padding: 20px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+/* 按鈕 */
+button {
+    margin-top: 15px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #00c9a7;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* 進度條 */
+.progress {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 10px;
+    margin-top: 15px;
+    overflow: hidden;
+    display: none;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #00ffcc;
+    transition: width 0.3s;
+}
+
+/* 圖片 */
+img {
+    max-width: 100%;
+    margin-top: 20px;
+    border-radius: 10px;
+}
+
+/* 廣告區 */
+.ad {
+    margin: 20px 0;
+    padding: 10px;
+    background: white;
+    color: black;
+    border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🔥 AI 自動去背</h1>
+
+<!-- 上方廣告 -->
+<div class="ad">
+    <!-- Google AdSense 放這 -->
+    廣告區（上）
+</div>
+
+<div class="container">
+
+    <div class="upload-box" onclick="fileInput.click()">
+        點擊或拖曳圖片上傳
+    </div>
+
+    <input type="file" id="fileInput" hidden>
+
+    <button onclick="upload()">開始去背</button>
+
+    <div class="progress">
+        <div class="progress-bar" id="bar"></div>
+    </div>
+
+    <img id="result">
+
+    <br>
+    <a id="downloadBtn" style="display:none;" download="result.png">
+        <button>下載圖片</button>
+    </a>
+
+</div>
+
+<!-- 下方廣告 -->
+<div class="ad">
+    廣告區（下）
+</div>
+
+<script>
+let file;
+
+document.getElementById("fileInput").addEventListener("change", e => {
+    file = e.target.files[0];
+});
+
+async function upload() {
+    if (!file) {
+        alert("請先選圖片");
+        return;
+    }
+
+    const bar = document.getElementById("bar");
+    const progress = document.querySelector(".progress");
+
+    progress.style.display = "block";
+    bar.style.width = "20%";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch("/remove-bg", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error("失敗");
+
+        bar.style.width = "80%";
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        document.getElementById("result").src = url;
+
+        const downloadBtn = document.getElementById("downloadBtn");
+        downloadBtn.href = url;
+        downloadBtn.style.display = "inline";
+
+        bar.style.width = "100%";
+
+    } catch (e) {
+        alert("失敗了：" + e);
+    }
+}
+</script>
+
+</body>
+</html>
